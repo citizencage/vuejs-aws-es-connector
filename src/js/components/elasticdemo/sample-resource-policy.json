@@ -1,0 +1,26 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS" : "arn:aws:iam::[instance]:user/[name_of_user]"
+      },
+      "Action": "es:ESHttpGet",
+      "Resource": "[aws_es_instance]:domain/[name_of_index]/*"
+    },
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:*",
+      "Resource": "[aws_es_instance]:domain/[name_of_index]/*",
+      "Condition": {
+        "IpAddress": {
+          "aws:SourceIp": "[restrict_by_ip_address]"
+        }
+      }
+    }
+  ]
+}

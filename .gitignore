@@ -1,0 +1,25 @@
+node_modules
+.DS_Store
+.idea
+package-lock.json
+Thumbs.db
+._*
+
+# Packages #
+############
+*.7z
+*.dmg
+*.gz
+*.bz2
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+*.tgz
+
+# SASS #
+##########
+.sass-cache
+
+
