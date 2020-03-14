@@ -25,7 +25,7 @@ A reasonable understanding of the following AWS concepts is necessary to instant
 _Note: all project dependencies are listed in the package.json file, but the following packages, which pertain to signing HTTP Requests, are worth highlighting:_
 
 - [AWS SDK for JavaScript](https://www.npmjs.com/package/aws-sdk)
-- [HTTP-AWS-ES](Connection handler for Amazon ES) uses the aws-sdk to make signed requests to an Amazon ES endpoint.
+- [HTTP-AWS-ES](https://github.com/TheDeveloper/http-aws-es) uses the aws-sdk to make signed requests to an Amazon ES endpoint.
 
 ## Configuration
 
