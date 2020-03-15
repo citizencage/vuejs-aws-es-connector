@@ -3,9 +3,39 @@
 
         <div class="form-search">
             <div class="form-label-group">
-                <input type="text" id="inputSearch" class="form-control" placeholder="Enter your search term" required autofocus v-model="searchQuery.query.match.title" v-on:keyup.enter="updateKeywords">
+                <input type="text" id="inputSearch" class="form-control" placeholder="Enter your search term" required autofocus v-model="searchQuery" v-on:keyup.enter="updateKeywords">
                 <label for="inputSearch">Enter your search term</label>
             </div>
+
+            <div class="form-label-group">
+                <small id="searchTypeHelpBlock" class="form-text text-muted text-center">Specify search type</small>
+            </div>
+
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="customRadioSearchTitle" name="searchType" class="custom-control-input" value="title" v-model="selectedFields">
+                <label class="custom-control-label" for="customRadioSearchTitle">Title</label>
+            </div>
+
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="customRadioSearchDirector" name="searchType" class="custom-control-input" value="director" v-model="selectedFields">
+                <label class="custom-control-label" for="customRadioSearchDirector">Director</label>
+            </div>
+
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="customRadioSearchGenre" name="searchType" class="custom-control-input" value="genre" v-model="selectedFields">
+                <label class="custom-control-label" for="customRadioSearchGenre">Genre</label>
+            </div>
+
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="customRadioSearchActor" name="searchType" class="custom-control-input" value="actor" v-model="selectedFields">
+                <label class="custom-control-label" for="customRadioSearchActor">Actor</label>
+            </div>
+
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="customRadioSearchAll" name="searchType" class="custom-control-input" value="all" v-model="selectedFields">
+                <label class="custom-control-label" for="customRadioSearchAll">All</label>
+            </div>
+
             <button class="btn btn-lg btn-primary btn-block" type="button" v-on:click="updateKeywords">Search</button>
         </div>
 
@@ -38,7 +68,8 @@
 
     const mixin = {
         methods: {
-            getSearchResults(searchIndex, searchQuery) {
+            getSearchResults(searchIndex, searchFields, searchQuery) {
+                esConnector.queryFields = searchFields;
                 return esConnector.esGetSearchResults(searchIndex, searchQuery);
             }
 
@@ -53,13 +84,9 @@
                 resultsTotal: 0,
                 results: [],
                 searchIndex: 'esdemo',
-                searchQuery: {
-                    query: {
-                        match: {
-                            title: '',
-                        }
-                    }
-                },
+                selectedFields: 'title',
+                searchFields: [],
+                searchQuery: '',
             }
         },
         methods: {
@@ -69,7 +96,12 @@
                 this.invokeGetSearchResults();
             },
             invokeGetSearchResults() {
-                this.getSearchResults(this.searchIndex, this.searchQuery)
+                if(this.selectedFields === 'all') {
+                    this.searchFields = ['title', 'director', 'genre', 'actor'];
+                } else {
+                    this.searchFields = [this.selectedFields];
+                }
+                this.getSearchResults(this.searchIndex, this.searchFields, this.searchQuery)
                     .then((response) => {
                         if(response.hits.hits.length > 0) {
                             this.resultsTotal = response.hits.hits.length;
