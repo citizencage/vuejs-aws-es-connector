@@ -8,13 +8,24 @@ export class ElasticSearchConnector {
 
         // construct query object using multi_match search type
         // https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-match-query.html
-        this.queryObj = {
+        this.queryObjMultiMatch = {
             query: {
                 multi_match: {
                     query: '',
                     fields: []
                 }
             }
+        };
+
+        // construct query object using simple query string search type
+        // https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-simple-query-string-query.html
+        this.queryObjString = {
+          query: {
+              simple_query_string: {
+                  query: '',
+                  fields: []
+              }
+          }
         };
 
         this.options = {
@@ -38,17 +49,34 @@ export class ElasticSearchConnector {
         return this._fields;
     }
 
-    esGetSearchResults(searchIndex, searchQuery) {
-        this.esUpdateQueryDSL(searchQuery);
-        return this.client.search({
-            index: searchIndex,
-            body: JSON.stringify(this.queryObj)
-        });
+
+    esGetSearchResults(searchIndex, searchQuery, searchType) {
+        if(searchType === 'multi_match') {
+            this.esUpdateMultiMatchQueryDSL(searchQuery);
+            return this.client.search({
+                index: searchIndex,
+                body: JSON.stringify(this.queryObjMultiMatch)
+            });
+        } else {
+            // query_string
+            this.esUpdateStringQueryDSL(searchQuery);
+            return this.client.search({
+                index: searchIndex,
+                body: JSON.stringify(this.queryObjString)
+            });
+        }
     }
 
-    esUpdateQueryDSL(searchQuery) {
-        this.queryObj.query.multi_match.query = searchQuery;
-        this.queryObj.query.multi_match.fields = this._fields;
+
+
+    esUpdateMultiMatchQueryDSL(searchQuery) {
+        this.queryObjMultiMatch.query.multi_match.query = searchQuery;
+        this.queryObjMultiMatch.query.multi_match.fields = this._fields;
+    }
+
+    esUpdateStringQueryDSL(searchQuery) {
+        this.queryObjString.query.simple_query_string.query = searchQuery;
+        this.queryObjString.query.simple_query_string.fields = this._fields;
     }
 
 }

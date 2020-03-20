@@ -36,6 +36,11 @@
                 <label class="custom-control-label" for="customRadioSearchAll">All</label>
             </div>
 
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" id="customRadioSearchPhrase" name="searchType" class="custom-control-input" value="phrase" v-model="selectedFields">
+                <label class="custom-control-label" for="customRadioSearchPhrase">Phrase</label>
+            </div>
+
             <button class="btn btn-lg btn-primary btn-block" type="button" v-on:click="updateKeywords">Search</button>
         </div>
 
@@ -47,7 +52,8 @@
                             {{item.title}}, <em>directed by: {{item.director}}</em><br>
                             <strong>{{item.year}}</strong><br>
                             <em>genre: {{item.genre}}</em><br>
-                            <em>actors: {{item.actor}}</em>
+                            <em>actors: {{item.actor}}</em><br><br>
+                            <em>{{item.description}}</em>
                         </li>
                     </ul>
                 </transition>
@@ -68,9 +74,9 @@
 
     const mixin = {
         methods: {
-            getSearchResults(searchIndex, searchFields, searchQuery) {
+            getSearchResults(searchIndex, searchFields, searchQuery, searchType) {
                 esConnector.queryFields = searchFields;
-                return esConnector.esGetSearchResults(searchIndex, searchQuery);
+                return esConnector.esGetSearchResults(searchIndex, searchQuery, searchType);
             }
 
         }
@@ -87,22 +93,29 @@
                 selectedFields: 'title',
                 searchFields: [],
                 searchQuery: '',
+                searchType: '',
             }
         },
         methods: {
             updateKeywords() {
-                this.resultsTotal = 0;
-                this.results.length = 0;
                 this.invokeGetSearchResults();
             },
             invokeGetSearchResults() {
+                this.resultsTotal = 0;
+                this.results = [];
                 if(this.selectedFields === 'all') {
-                    this.searchFields = ['title', 'director', 'genre', 'actor'];
+                    this.searchFields = ['title', 'director', 'genre', 'actor', 'description'];
+                    this.searchType = 'multi_match';
+                } else if(this.selectedFields === 'phrase') {
+                    this.searchFields = ['title', 'director', 'genre^3', 'actor', 'description^2'];
+                    this.searchType = 'simple_query_string';
                 } else {
                     this.searchFields = [this.selectedFields];
+                    this.searchType = 'multi_match';
                 }
-                this.getSearchResults(this.searchIndex, this.searchFields, this.searchQuery)
+                this.getSearchResults(this.searchIndex, this.searchFields, this.searchQuery, this.searchType)
                     .then((response) => {
+                        console.log(response);
                         if(response.hits.hits.length > 0) {
                             this.resultsTotal = response.hits.hits.length;
                             $.each(response.hits.hits, (i, item) => {
@@ -114,9 +127,13 @@
                                         ['director']: item._source.director,
                                         ['genre']: item._source.genre.join(', '),
                                         ['actor']: item._source.actor.join(', '),
+                                        ['description']: item._source.description,
                                     }
                                 );
                             });
+                        } else {
+                            this.resultsTotal = 0;
+                            this.results = [];
                         }
                     })
                     .catch(error => {

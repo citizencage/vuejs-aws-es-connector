@@ -11,3 +11,8 @@ All notable changes to `vuejs-aws-es-connector` will be documented in this file
 - Removed query match object from sample VueJS application
 - Added javascript getters and setters for query fields array
 - Added mulit_match object variable in javascript constructor
+
+## 1.0.2 - 2020-03-20
+
+- Added description field to sample elastic index
+- Added searching by simple query string - not sure how much value it has with limited search data
