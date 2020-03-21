@@ -60,6 +60,12 @@
             </div>
         </div>
 
+        <div class="row">
+            <div class="col-md-12">
+                <Pagination :results-total="total" :per-page="perPage" :current-offset="currentOffset"></Pagination>
+            </div>
+        </div>
+
     </div>
 </template>
 
@@ -72,10 +78,16 @@
     const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
     const esConnector = new ElasticSearchConnector(host, region, accessKeyId, secretAccessKey);
 
+    import {EventBus} from '../../common';
+    import Pagination from '../pagination/pagination';
+
     const mixin = {
         methods: {
-            getSearchResults(searchIndex, searchFields, searchQuery, searchType) {
+            getSearchResults(searchIndex, searchFields, searchQuery, searchType, currentOffset) {
                 esConnector.queryFields = searchFields;
+                esConnector.queryExplain = false;
+                esConnector.queryFrom = currentOffset;
+                esConnector.querySize = 2;
                 return esConnector.esGetSearchResults(searchIndex, searchQuery, searchType);
             }
 
@@ -85,9 +97,14 @@
     export default {
         name: 'ElasticDemo',
         mixins: [mixin],
+        components: {
+          Pagination
+        },
         data() {
             return {
-                resultsTotal: 0,
+                total: 0,
+                perPage: 2,
+                currentOffset: 0,
                 results: [],
                 searchIndex: 'esdemo',
                 selectedFields: 'title',
@@ -101,7 +118,7 @@
                 this.invokeGetSearchResults();
             },
             invokeGetSearchResults() {
-                this.resultsTotal = 0;
+                this.total = 0;
                 this.results = [];
                 if(this.selectedFields === 'all') {
                     this.searchFields = ['title', 'director', 'genre', 'actor', 'description'];
@@ -113,11 +130,11 @@
                     this.searchFields = [this.selectedFields];
                     this.searchType = 'multi_match';
                 }
-                this.getSearchResults(this.searchIndex, this.searchFields, this.searchQuery, this.searchType)
+                this.getSearchResults(this.searchIndex, this.searchFields, this.searchQuery, this.searchType, this.currentOffset)
                     .then((response) => {
                         console.log(response);
                         if(response.hits.hits.length > 0) {
-                            this.resultsTotal = response.hits.hits.length;
+                            this.total = response.hits.total.value;
                             $.each(response.hits.hits, (i, item) => {
                                 this.results.push(
                                     {
@@ -132,9 +149,12 @@
                                 );
                             });
                         } else {
-                            this.resultsTotal = 0;
+                            this.total = 0;
                             this.results = [];
                         }
+                    })
+                    .then( () => {
+                        EventBus.$emit('initPagination');
                     })
                     .catch(error => {
                         console.log(error.response);

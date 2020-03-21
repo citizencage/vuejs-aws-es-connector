@@ -8,7 +8,7 @@ export class ElasticSearchConnector {
 
         // construct query object using multi_match search type
         // https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-match-query.html
-        this.queryObjMultiMatch = {
+        this._queryObjMultiMatch = {
             query: {
                 multi_match: {
                     query: '',
@@ -19,7 +19,7 @@ export class ElasticSearchConnector {
 
         // construct query object using simple query string search type
         // https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-simple-query-string-query.html
-        this.queryObjString = {
+        this._queryObjString = {
           query: {
               simple_query_string: {
                   query: '',
@@ -27,6 +27,12 @@ export class ElasticSearchConnector {
               }
           }
         };
+
+        this._explain = false;
+
+        this._from = 0;
+
+        this._size = 20;
 
         this.options = {
             hosts: [host],
@@ -49,34 +55,64 @@ export class ElasticSearchConnector {
         return this._fields;
     }
 
+    set queryExplain(explain) {
+        this._explain = explain;
+    }
+
+    get queryExplain() {
+        return this._explain;
+    }
+
+    set queryFrom(from) {
+        this._from = from;
+    }
+
+    get queryFrom() {
+        return this._from;
+    }
+
+    set querySize(size) {
+        this._size = size;
+    }
+
+    get querySize() {
+        return this._size;
+    }
+
 
     esGetSearchResults(searchIndex, searchQuery, searchType) {
+        let searchBody;
         if(searchType === 'multi_match') {
-            this.esUpdateMultiMatchQueryDSL(searchQuery);
-            return this.client.search({
-                index: searchIndex,
-                body: JSON.stringify(this.queryObjMultiMatch)
-            });
+            this._esUpdateMultiMatchQueryDSL(searchQuery);
+            searchBody = this._queryObjMultiMatch;
         } else {
             // query_string
-            this.esUpdateStringQueryDSL(searchQuery);
-            return this.client.search({
-                index: searchIndex,
-                body: JSON.stringify(this.queryObjString)
-            });
+            this._esUpdateStringQueryDSL(searchQuery);
+            searchBody = this._queryObjString;
         }
+        return this._executeSearch(searchIndex, searchBody);
     }
 
 
 
-    esUpdateMultiMatchQueryDSL(searchQuery) {
-        this.queryObjMultiMatch.query.multi_match.query = searchQuery;
-        this.queryObjMultiMatch.query.multi_match.fields = this._fields;
+    _esUpdateMultiMatchQueryDSL(searchQuery) {
+        this._queryObjMultiMatch.query.multi_match.query = searchQuery;
+        this._queryObjMultiMatch.query.multi_match.fields = this._fields;
     }
 
-    esUpdateStringQueryDSL(searchQuery) {
-        this.queryObjString.query.simple_query_string.query = searchQuery;
-        this.queryObjString.query.simple_query_string.fields = this._fields;
+    _esUpdateStringQueryDSL(searchQuery) {
+        this._queryObjString.query.simple_query_string.query = searchQuery;
+        this._queryObjString.query.simple_query_string.fields = this._fields;
+    }
+
+    _executeSearch(searchIndex, searchBody) {
+        return this.client.search({
+            index: searchIndex,
+            explain: this._explain,
+            from: this._from,
+            size: this._size,
+            body: JSON.stringify(searchBody)
+        });
     }
 
 }
