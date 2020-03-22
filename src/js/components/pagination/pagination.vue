@@ -2,16 +2,16 @@
     <div>
         <div v-if="paging">
             <nav aria-label="search-pagination">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                <ul class="pagination" :class="setAlignment">
+
+                    <li class="page-item" :class="[ prev.length > 0 ? '' : 'disabled' ]"><a href="javascript:void(0)" @click="updatePage(prev[0].number, prev[0].offset)" class="page-link" :aria-disabled="[ prev.length > 0 ? '' : 'true' ]">Previous</a></li>
+
+                    <li :aria-current="[ item.selected ? 'page' : '' ]" class="page-item" :class="[ item.selected ? 'active' : '' ]" v-for="item in pageItems">
+                        <a href="javascript:void(0)" @click="updatePage(item.number, item.offset)" class="page-link">{{ item.number }}<span v-if="item.selected" class="sr-only">(current)</span></a>
                     </li>
-                    <li class="page-item"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
+
+                    <li class="page-item" :class="[ next.length > 0 ? '' : 'disabled' ]"><a href="javascript:void(0)" @click="updatePage(next[0].number, next[0].offset)" class="page-link" :aria-disabled="[ next.length > 0 ? '' : 'true' ]">Next</a></li>
+
                 </ul>
             </nav>
         </div>
@@ -25,23 +25,24 @@
         name: 'Pagination',
 
         props: {
-            resultsTotal: {
-                type: Number,
-                default: 0
-            },
             perPage: {
                 type: Number,
                 default: 20
             },
-            currentOffset: {
+            numberOfLinks: {
                 type: Number,
-                default: 0
+                default: 3 // Number of "digit" links to show before/after the currently viewed page
+            },
+            alignment: {
+                type: String,
+                default: 'center' // left, right, center
             }
         },
         data() {
             return {
-                numberOfLinks: 2, // Number of "digit" links to show before/after the currently viewed page
                 currentPage: 0, // The current page being viewed
+                currentOffset: 0,
+                resultsTotal: 0,
                 paging: false,
                 prev: [],
                 next: [],
@@ -49,13 +50,39 @@
             }
         },
         mounted() {
-            EventBus.$on('initPagination', () => {
-                this.initPagination();
+            EventBus.$on('initPagination', (offset, total) => {
+                this.initPagination(offset, total);
             });
         },
+        computed: {
+          setAlignment() {
+              let alignment_string;
+              switch (this.alignment) {
+                  case 'left' :
+                      alignment_string = 'justify-content-start';
+                      break;
+                  case 'center' :
+                      alignment_string = 'justify-content-center';
+                      break;
+                  case 'right' :
+                      alignment_string = 'justify-content-end';
+                      break;
+                  default :
+                      alignment_string = 'justify-content-center'
+              }
+              return alignment_string;
+          }
+        },
         methods: {
-            initPagination() {
-                if (this.resultsTotal > 0 && (this.resultsTotal !== this.perPage)) {
+            updatePage(number, offset) {
+              this.currentPage = number;
+              this.currentOffset = offset;
+              this.$emit('updatePage', this.currentPage, this.currentOffset);
+            },
+            initPagination(offset, total) {
+                this.resultsTotal = total;
+                this.currentOffset = offset;
+                if (this.resultsTotal > 1 && (this.resultsTotal !== this.perPage)) {
                     this.buildPagination();
                 } else {
                     // reset pagination (no need to display it)
@@ -103,7 +130,7 @@
                     this.next.push(
                         {
                             ['offset']: this.currentPage * this.perPage,
-                            ['number']: (this.currentPage === 1) ? 2 : (this.currentPage * this.perPage) - this.perPage
+                            ['number']: this.currentPage + 1
                         }
                     );
                 }
@@ -121,7 +148,7 @@
                         );
                     }
                 }
-                console.log('number of pages', number_of_pages);
+
                 this.paging = true;
             }
         }

@@ -16,3 +16,8 @@ All notable changes to `vuejs-aws-es-connector` will be documented in this file
 
 - Added description field to sample elastic index
 - Added searching by simple query string - not sure how much value it has with limited search data
+
+## 1.0.3 - 2020-03-22
+
+- Modified elasticsearch connector class to emit paginated results
+- Created VueJS pagination component that works seamlessly with page numbers and / or offsets

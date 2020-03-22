@@ -62,7 +62,7 @@
 
         <div class="row">
             <div class="col-md-12">
-                <Pagination :results-total="total" :per-page="perPage" :current-offset="currentOffset"></Pagination>
+                <Pagination :alignment="paginationAlignment" :number-of-links="numberOfLinks" :per-page="perPage" v-on:updatePage="updatePage"></Pagination>
             </div>
         </div>
 
@@ -87,7 +87,7 @@
                 esConnector.queryFields = searchFields;
                 esConnector.queryExplain = false;
                 esConnector.queryFrom = currentOffset;
-                esConnector.querySize = 2;
+                esConnector.querySize = 3;
                 return esConnector.esGetSearchResults(searchIndex, searchQuery, searchType);
             }
 
@@ -103,7 +103,10 @@
         data() {
             return {
                 total: 0,
-                perPage: 2,
+                paginationAlignment: 'center',
+                perPage: 3,
+                numberOfLinks: 2,
+                currentPage: 1,
                 currentOffset: 0,
                 results: [],
                 searchIndex: 'esdemo',
@@ -114,7 +117,20 @@
             }
         },
         methods: {
+            updatePage(number, offset) {
+                this.currentPage = number;
+                this.currentOffset = offset;
+                //this.convertPageNumberToOffset();
+                this.invokeGetSearchResults();
+
+            },
+            // utility method for converting page numbers to offsets (useful when working with history state and user-friendly url params)
+            convertPageNumberToOffset() {
+              this.currentOffset = (this.currentPage * this.perPage) - this.perPage;
+            },
             updateKeywords() {
+                this.currentPage = 1;
+                this.currentOffset = 0;
                 this.invokeGetSearchResults();
             },
             invokeGetSearchResults() {
@@ -154,7 +170,7 @@
                         }
                     })
                     .then( () => {
-                        EventBus.$emit('initPagination');
+                        EventBus.$emit('initPagination', this.currentOffset, this.total);
                     })
                     .catch(error => {
                         console.log(error.response);
