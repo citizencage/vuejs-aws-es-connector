@@ -28,6 +28,24 @@ export class ElasticSearchConnector {
           }
         };
 
+        // construct query object using query and filter context
+        // https://www.elastic.co/guide/en/elasticsearch/reference/7.6/query-filter-context.html
+        this._boolObjMatch = {
+          query: {
+              bool: {
+                  must: {
+                      multi_match: {
+                          query: '',
+                          fields: []
+                      }
+                  },
+                  filter: {
+
+                  }
+              }
+          }
+        };
+
         this._explain = false;
 
         this._from = 0;
@@ -79,15 +97,32 @@ export class ElasticSearchConnector {
         return this._size;
     }
 
+    /*
+    // 'term' and 'range' clauses are used in filter context.
+    // example clause: { "publish_date": { "gte": "2015-01-01" }}
+     */
+    set filterCondition(object) {
+        this._filterCondition = object;
+    }
+
+    get filterCondition() {
+        return this._filterCondition;
+    }
+
+
 
     esGetSearchResults(searchIndex, searchQuery, searchType) {
         let searchBody;
         if(searchType === 'multi_match') {
             this._esUpdateMultiMatchQueryDSL(searchQuery);
             searchBody = this._queryObjMultiMatch;
+        } else if (searchType === 'bool') {
+            this._esUpdateBoolObjMatchQueryDSL(searchQuery);
+            searchBody = this._boolObjMatch;
+            console.log(searchBody);
         } else {
             // query_string
-            this._esUpdateStringQueryDSL(searchQuery);
+            this._esUpdateObjStringQueryDSL(searchQuery);
             searchBody = this._queryObjString;
         }
         return this._executeSearch(searchIndex, searchBody);
@@ -100,9 +135,15 @@ export class ElasticSearchConnector {
         this._queryObjMultiMatch.query.multi_match.fields = this._fields;
     }
 
-    _esUpdateStringQueryDSL(searchQuery) {
+    _esUpdateObjStringQueryDSL(searchQuery) {
         this._queryObjString.query.simple_query_string.query = searchQuery;
         this._queryObjString.query.simple_query_string.fields = this._fields;
+    }
+
+    _esUpdateBoolObjMatchQueryDSL(searchQuery) {
+        this._boolObjMatch.query.bool.must.multi_match.query = searchQuery;
+        this._boolObjMatch.query.bool.must.multi_match.fields = this._fields;
+        this._boolObjMatch.query.bool.filter = this._filterCondition;
     }
 
     _executeSearch(searchIndex, searchBody) {

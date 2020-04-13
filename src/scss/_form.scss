@@ -21,6 +21,9 @@
   .form-label-group {
     position: relative;
     margin-bottom: 1rem;
+    &.hide {
+      display: none;
+    }
     > label {
       position: absolute;
       top: 0;

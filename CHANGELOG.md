@@ -21,3 +21,7 @@ All notable changes to `vuejs-aws-es-connector` will be documented in this file
 
 - Modified elasticsearch connector class to emit paginated results
 - Created VueJS pagination component that works seamlessly with page numbers and / or offsets
+
+## 1.0.4 - 2020-04-13
+
+- Added query filter capabilities to elasticsearch connector class
